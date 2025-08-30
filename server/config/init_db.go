@@ -5,26 +5,33 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/golang-migrate/migrate"
-	"github.com/golang-migrate/migrate/database/postgres"
-	"github.com/joho/godotenv"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
 )
 
+// InitDB initializes the database connection and applies migrations
 func InitDB() (*sql.DB, error) {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+	cfg := struct {
+		Host     string
+		Port     string
+		User     string
+		Password string
+		Name     string
+		SSLMode  string
+	}{
+		Host:     GetEnv("POSTGRES_HOST", "localhost"),
+		Port:     GetEnv("POSTGRES_PORT", "5432"),
+		User:     GetEnv("POSTGRES_USER", "postgres"),
+		Password: GetEnv("POSTGRES_PASSWORD", "password"),
+		Name:     GetEnv("POSTGRES_DB", "warehouse_db"),
+		SSLMode:  GetEnv("POSTGRES_SSLMODE", "disable"),
 	}
+	log.Printf("Connecting to database at %s:%s with user %s", cfg.Host, cfg.Port, cfg.User)
 
-	dbHost := GetEnv("DB_HOST", "localhost")
-	dbPort := GetEnv("DB_PORT", "5432")
-	dbUser := GetEnv("DB_USER", "postgres")
-	dbPassword := GetEnv("DB_PASSWORD", "password")
-	dbName := GetEnv("DB_NAME", "warehouse_db")
-
-	log.Printf("Connecting to database at %s:%s with user %s", dbHost, dbPort, dbUser)
-
-	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbPassword, dbName)
+	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode)
 
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
@@ -43,6 +50,7 @@ func InitDB() (*sql.DB, error) {
 	return db, nil
 }
 
+// applyMigrations runs the database migrations using golang-migrate
 func applyMigrations(db *sql.DB) error {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {

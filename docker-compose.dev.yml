@@ -1,0 +1,43 @@
+services:
+  db:
+    container_name: dev_postgres
+    image: postgres:13
+    env_file:
+      - dbconfig.env
+    ports:
+      - "5438:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init.sh:/docker-entrypoint-initdb.d/init.sh
+
+  client:
+    container_name: dev_client
+    build:
+      context: .
+      dockerfile: client/Dockerfile.dev
+    ports:
+      - "5173:5173"
+    env_file:
+      - webconfig.env
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+
+  server:
+    container_name: dev_server
+    build:
+      context: .
+      dockerfile: server/Dockerfile.dev
+    ports:
+      - "8080:8080"
+    env_file:
+      - dbconfig.env
+      - webconfig.env
+    depends_on:
+      - db
+    volumes:
+      - ./server:/app
+
+volumes:
+  db_data:
+    driver: local
