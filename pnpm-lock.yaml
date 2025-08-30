@@ -1,0 +1,24 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      esbuild-wasm:
+        specifier: ^0.25.9
+        version: 0.25.9
+
+packages:
+
+  esbuild-wasm@0.25.9:
+    resolution: {integrity: sha512-Jpv5tCSwQg18aCqCRD3oHIX/prBhXMDapIoG//A+6+dV0e7KQMGFg85ihJ5T1EeMjbZjON3TqFy0VrGAnIHLDA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+snapshots:
+
+  esbuild-wasm@0.25.9: {}

@@ -1,1 +1,8 @@
+# Environment variables
 dbconfig.env
+
+# VS Code settings
+.vscode/
+
+# Vendor
+vendor/
