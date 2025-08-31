@@ -1,7 +1,9 @@
 package model
 
 import (
+	"errors"
 	"fmt"
+	"server/utils"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,9 +21,9 @@ const (
 
 type Package struct {
 	ID        uuid.UUID     `db:"id" json:"id"`
-	PackageID string        `db:"package_id" json:"package_id"`
+	PackageID string        `db:"package_id" json:"package_id,omitempty"`
 	OrderRef  string        `db:"order_ref" json:"order_ref"`
-	Driver    string        `db:"driver" json:"driver"`
+	Driver    *string       `db:"driver" json:"driver,omitempty"`
 	Status    PackageStatus `db:"status" json:"status"`
 
 	CreatedAt  time.Time `db:"created_at" json:"created_at"`
@@ -47,7 +49,12 @@ type PackageModel struct {
 	DB *sqlx.DB
 }
 
-func (m *PackageModel) GetAll(status string, limit, offset int) (PackageWithTotals, error) {
+var (
+	ErrInvalidTransition = errors.New("invalid status transition")
+	ErrAlreadyFinal      = errors.New("package already in a final state")
+)
+
+func (m *PackageModel) GetAll(status string, limit, offset int) (PackageWithTotals, int, error) {
 	var result PackageWithTotals
 	args := []any{}
 
@@ -67,7 +74,18 @@ func (m *PackageModel) GetAll(status string, limit, offset int) (PackageWithTota
 	}
 
 	if err := m.DB.Select(&result.Packages, query, args...); err != nil {
-		return result, err
+		return result, 0, err
+	}
+
+	var total int
+	countQuery := "SELECT COUNT(*) FROM packages"
+	countArgs := []any{}
+	if status != "" {
+		countQuery += " WHERE status = $1"
+		countArgs = append(countArgs, status)
+	}
+	if err := m.DB.Get(&total, countQuery, countArgs...); err != nil {
+		return result, 0, err
 	}
 
 	totalQuery := `
@@ -82,15 +100,15 @@ func (m *PackageModel) GetAll(status string, limit, offset int) (PackageWithTota
 	if status != "" {
 		totalQuery += " WHERE status = $1"
 		if err := m.DB.Get(&result.Aggregates, totalQuery, status); err != nil {
-			return result, err
+			return result, 0, err
 		}
 	} else {
 		if err := m.DB.Get(&result.Aggregates, totalQuery); err != nil {
-			return result, err
+			return result, 0, err
 		}
 	}
 
-	return result, nil
+	return result, total, nil
 }
 
 func (m *PackageModel) GetByID(id uuid.UUID) (*Package, error) {
@@ -106,6 +124,7 @@ func (m *PackageModel) GetByID(id uuid.UUID) (*Package, error) {
 func (m *PackageModel) Create(pkg *Package) error {
 	pkg.CreatedAt = time.Now()
 	pkg.ModifiedAt = time.Now()
+	pkg.PackageID = utils.GeneratePackageID()
 
 	query := `
 		INSERT INTO packages (
@@ -126,7 +145,7 @@ func (m *PackageModel) Create(pkg *Package) error {
 			:modified_at,
 			:modified_by
 		)
-		RETURNING id, status
+		RETURNING *
 	`
 
 	stmt, err := m.DB.PrepareNamed(query)
@@ -137,34 +156,39 @@ func (m *PackageModel) Create(pkg *Package) error {
 	return stmt.Get(pkg, pkg)
 }
 
-func (m *PackageModel) UpdateStatus(id uuid.UUID) (*Package, error) {
+func (m *PackageModel) UpdateStatus(id uuid.UUID, newStatus PackageStatus) (*Package, error) {
 	var pkg Package
 	tx, err := m.DB.Beginx()
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
+
 	if err := tx.Get(&pkg, "SELECT * FROM packages WHERE id=$1 FOR UPDATE", id); err != nil {
 		return nil, err
 	}
 
+	valid := false
 	switch pkg.Status {
 	case StatusWaiting:
-		pkg.Status = StatusPicked
+		valid = (newStatus == StatusPicked)
 	case StatusPicked:
-		pkg.Status = StatusHandedOver
+		valid = (newStatus == StatusHandedOver)
 	case StatusHandedOver, StatusExpired:
-		return &pkg, nil
-	default:
-		return nil, fmt.Errorf("invalid current status")
+		return nil, fmt.Errorf("%w: package already %s", ErrInvalidTransition, pkg.Status)
 	}
 
+	if !valid {
+		return nil, fmt.Errorf("%w: %s → %s", ErrInvalidTransition, pkg.Status, newStatus)
+	}
+
+	pkg.Status = newStatus
 	pkg.ModifiedAt = time.Now()
 	if _, err := tx.Exec(`
-		UPDATE packages
-		SET status=$1, modified_at=$2
-		WHERE id=$3
-	`, pkg.Status, pkg.ModifiedAt, id); err != nil {
+        UPDATE packages
+        SET status=$1, modified_at=$2
+        WHERE id=$3
+    `, pkg.Status, pkg.ModifiedAt, id); err != nil {
 		return nil, err
 	}
 

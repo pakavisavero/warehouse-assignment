@@ -1,7 +1,5 @@
--- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create package_status enum if it doesn't exist
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'package_status') THEN
@@ -10,7 +8,6 @@ BEGIN
 END
 $$;
 
--- Users table
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(150) UNIQUE NOT NULL,
@@ -21,12 +18,12 @@ CREATE TABLE IF NOT EXISTS users (
     modified_by VARCHAR(150)
 );
 
--- Packages table
+
 CREATE TABLE IF NOT EXISTS packages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     package_id VARCHAR(150) UNIQUE NOT NULL,
     order_ref VARCHAR(150) NOT NULL,
-    driver VARCHAR(150) NOT NULL,
+    driver VARCHAR(150),
     status package_status NOT NULL DEFAULT 'WAITING',
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(150),
@@ -34,7 +31,6 @@ CREATE TABLE IF NOT EXISTS packages (
     modified_by VARCHAR(150)
 );
 
--- Package logs table to track status changes
 CREATE TABLE IF NOT EXISTS package_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     package_id UUID NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
@@ -45,7 +41,6 @@ CREATE TABLE IF NOT EXISTS package_logs (
     note TEXT
 );
 
--- Indexes
 CREATE INDEX IF NOT EXISTS idx_package_logs_package_id ON package_logs(package_id);
 CREATE INDEX IF NOT EXISTS idx_packages_status ON packages(status);
 
