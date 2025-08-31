@@ -8,15 +8,20 @@ import type { ReactNode } from 'react';
 
 export const getStatusBadge = (status: string): { color: string; icon: ReactNode | null } => {
     switch (status.toUpperCase()) {
+        case 'ALL':
+            return {
+                color: 'text-purple-900 bg-purple-200',
+                icon: <AiOutlineGift className="inline mr-1" />
+            };
         case 'WAITING':
-            return { color: 'text-yellow-800 bg-yellow-100', icon: <AiOutlineClockCircle className="inline mr-1" /> };
+            return { color: 'text-yellow-900 bg-yellow-200', icon: <AiOutlineClockCircle className="inline mr-1" /> };
         case 'PICKED':
-            return { color: 'text-blue-800 bg-blue-100', icon: <AiOutlineCheckCircle className="inline mr-1" /> };
-        case 'HANDED OVER':
-            return { color: 'text-green-800 bg-green-100', icon: <AiOutlineGift className="inline mr-1" /> };
+            return { color: 'text-blue-900 bg-blue-200', icon: <AiOutlineCheckCircle className="inline mr-1" /> };
+        case 'HANDED_OVER':
+            return { color: 'text-green-900 bg-green-200', icon: <AiOutlineGift className="inline mr-1" /> };
         case 'EXPIRED':
-            return { color: 'text-red-800 bg-red-100', icon: <AiOutlineCloseCircle className="inline mr-1" /> };
+            return { color: 'text-red-900 bg-red-200', icon: <AiOutlineCloseCircle className="inline mr-1" /> };
         default:
-            return { color: 'text-gray-700 bg-gray-100', icon: null };
+            return { color: 'text-gray-800 bg-gray-200', icon: null };
     }
 };
