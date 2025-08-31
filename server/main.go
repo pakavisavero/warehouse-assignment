@@ -17,7 +17,7 @@ func startPackageExpiryChecker(pkgModel *model.PackageModel) {
 	ticker := time.NewTicker(1 * time.Minute)
 	go func() {
 		for range ticker.C {
-			if err := pkgModel.ExpireOldPackages(1 * time.Minute); err != nil {
+			if err := pkgModel.ExpireOldPackages(10 * time.Minute); err != nil {
 				log.Println("Failed to expire packages:", err)
 			}
 		}
@@ -47,7 +47,7 @@ func main() {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowAllOrigins: true,
-		AllowMethods:    []string{"GET", "POST", "PUT", "OPTIONS"},
+		AllowMethods:    []string{"GET", "POST", "PUT", "OPTIONS", "PATCH"},
 		AllowHeaders:    []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders: []string{
 			"Content-Length",

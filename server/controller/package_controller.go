@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 	"server/model"
+	"server/types"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -14,8 +16,9 @@ type PackageController struct {
 }
 
 type Response struct {
-	Message string `json:"message"`
-	Data    any    `json:"data,omitempty"`
+	Message string      `json:"message"`
+	Meta    *types.Meta `json:"_meta,omitempty"`
+	Data    any         `json:"data"`
 }
 
 func (pc *PackageController) GetAll(c *gin.Context) {
@@ -33,20 +36,34 @@ func (pc *PackageController) GetAll(c *gin.Context) {
 		offset = 0
 	}
 
-	packages, err := pc.Model.GetAll(status, limit, offset)
+	packages, total, err := pc.Model.GetAll(status, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Response{Message: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, Response{Message: "Packages fetched successfully", Data: packages})
+	totalPages := (total + limit - 1) / limit
+	page := (offset / limit) + 1
+
+	meta := &types.Meta{
+		Limit:      limit,
+		Page:       page,
+		TotalPages: totalPages,
+		Total:      total,
+	}
+
+	c.JSON(http.StatusOK, Response{
+		Message: "Packages fetched successfully",
+		Data:    packages,
+		Meta:    meta,
+	})
 }
 
 func (pc *PackageController) GetByID(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := uuid.Parse(idParam)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid UUID"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid UUID"})
 		return
 	}
 
@@ -76,13 +93,26 @@ func (pc *PackageController) UpdateStatus(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := uuid.Parse(idParam)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid UUID"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid UUID"})
 		return
 	}
 
-	pkg, err := pc.Model.UpdateStatus(id)
+	var req struct {
+		Status model.PackageStatus `json:"status" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request body"})
+		return
+	}
+
+	pkg, err := pc.Model.UpdateStatus(id, req.Status)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, Response{Message: err.Error()})
+		switch {
+		case errors.Is(err, model.ErrInvalidTransition):
+			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "internal server error"})
+		}
 		return
 	}
 
