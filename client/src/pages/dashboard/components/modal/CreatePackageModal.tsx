@@ -84,14 +84,14 @@ export default function CreatePackageModal({ isOpen, onClose, onCreate }: Create
                                 <div className="mt-6 flex justify-end gap-3">
                                     <button
                                         onClick={onClose}
-                                        className="rounded-md border border-[var(--border)] px-5 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--muted)] hover:shadow-sm transition"
+                                        className="rounded-md border border-[var(--border)] px-5 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--muted)] hover:shadow-sm transition cursor-pointer"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={handleSubmit}
                                         disabled={!orderRef.trim()}
-                                        className={`rounded-md px-5 py-2 text-sm font-medium shadow transition ${orderRef.trim()
+                                        className={`rounded-md px-5 py-2 text-sm font-medium shadow transition cursor-pointer ${orderRef.trim()
                                                 ? 'bg-[var(--primary)] text-[var(--primary-foreground)] hover:brightness-90'
                                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                             }`}

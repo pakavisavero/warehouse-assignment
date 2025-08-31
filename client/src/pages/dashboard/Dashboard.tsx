@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams, useLocation } from 'react-router-dom'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 
@@ -13,36 +14,52 @@ import { Flash } from '@/components/Flash'
 import type { FlashMessage } from '@/types/FlashMessage'
 
 export default function Dashboard() {
+  const location = useLocation()
   const [itemsPerPage, setItemsPerPage] = useState<number>(5)
   const [currentPage, setCurrentPage] = useState<number>(1)
-  const [selectedStatus, setSelectedStatus] = useState<string>(
-    new URLSearchParams(window.location.search).get('status') || 'ALL'
-  )
   const [activeMenu, setActiveMenu] = useState<string>('Dashboard')
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false)
   const [flash, setFlash] = useState<FlashMessage | null>(null)
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const statusParam = searchParams.get('status') || 'ALL'
+  const pageParam = searchParams.get('page') || '1'
+  const limitParam = searchParams.get('limit') || '5'
+
+  const [selectedStatus, setSelectedStatus] = useState<string>(statusParam)
+
+  // Sync query params only if we are on /dashboard
   useEffect(() => {
-    const url = new URL(window.location.href)
-    if (selectedStatus === 'ALL') url.searchParams.delete('status')
-    else url.searchParams.set('status', selectedStatus)
-    url.searchParams.set('page', currentPage.toString())
-    url.searchParams.set('limit', itemsPerPage.toString())
-    window.history.replaceState({}, '', url.toString())
-  }, [selectedStatus, currentPage, itemsPerPage])
+    if (location.pathname !== '/dashboard') return
+
+    setCurrentPage(Number(pageParam))
+    setItemsPerPage(Number(limitParam))
+    setSelectedStatus(statusParam)
+  }, [location.pathname, pageParam, limitParam, statusParam])
+
+  useEffect(() => {
+    if (location.pathname !== '/dashboard') return
+
+    const params: Record<string, string> = {
+      page: currentPage.toString(),
+      limit: itemsPerPage.toString(),
+    }
+    if (selectedStatus !== 'ALL') params.status = selectedStatus
+    setSearchParams(params)
+  }, [selectedStatus, currentPage, itemsPerPage, setSearchParams, location.pathname])
 
   const { packages, aggregates, loading, totalPages } = usePackages({
     selectedStatus,
     currentPage,
-    itemsPerPage
+    itemsPerPage,
   })
 
   const handleCreatePackage = async (data: { orderRef: string; driver?: string }) => {
     try {
       await createPackage(data)
-      setFlash({ type: "success", message: "Package created successfully!" })
+      setFlash({ type: 'success', message: 'Package created successfully!' })
     } catch (err: any) {
-      setFlash({ type: "error", message: err.message || "Failed to create package." })
+      setFlash({ type: 'error', message: err.message || 'Failed to create package.' })
     } finally {
       setTimeout(() => setFlash(null), 3000)
     }
@@ -50,23 +67,21 @@ export default function Dashboard() {
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      const data = await updatePackageStatus(id, status);
-
+      const data = await updatePackageStatus(id, status)
       setFlash({
-        type: "success",
+        type: 'success',
         message: data.message || `Package status updated to ${status}`,
-      });
+      })
     } catch (err: any) {
-      console.error("Caught error:", err);
+      console.error('Caught error:', err)
       setFlash({
-        type: "error",
-        message: err?.message || "Failed to update status.",
-      });
+        type: 'error',
+        message: err?.message || 'Failed to update status.',
+      })
     } finally {
-      setTimeout(() => setFlash(null), 3000);
+      setTimeout(() => setFlash(null), 3000)
     }
-  };
-
+  }
 
   return (
     <>
@@ -74,7 +89,7 @@ export default function Dashboard() {
         <div className="fixed top-4 right-4 z-50 w-full max-w-sm">
           <Flash
             type={flash.type}
-            title={flash.type === "success" ? "Success" : "Error"}
+            title={flash.type === 'success' ? 'Success' : 'Error'}
             message={flash.message}
           />
         </div>

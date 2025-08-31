@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { loginApi } from '@/api/auth'
+import { Flash } from '@/components/Flash'
 
 const images = ['/images/warehouse.jpg', '/images/warehouse-2.jpg', '/images/warehouse-3.jpg']
 
@@ -11,6 +13,7 @@ export default function LoginPage() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [currentImage, setCurrentImage] = useState(0)
+    const [flash, setFlash] = useState<{ type: "success" | "error"; message: string } | null>(null)
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -19,24 +22,57 @@ export default function LoginPage() {
         return () => clearInterval(interval)
     }, [])
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (!username || !password) return
-        login(username)
-        navigate('/dashboard', { replace: true })
+
+        try {
+            const res = await loginApi(username, password)
+            if (!res.data) throw new Error(res.message)
+
+            login(res.data.username)
+            setFlash({
+                type: "success",
+                message: res.message || "Login successful",
+            })
+
+            setTimeout(() => {
+                navigate("/dashboard", { replace: true })
+            }, 1000)
+        } catch (error: any) {
+            console.error("Login error:", error)
+            setFlash({
+                type: "error",
+                message: error.message || "Login failed",
+            })
+        } finally {
+            setTimeout(() => setFlash(null), 3000)
+        }
     }
+
+
 
     if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
     const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value
             .split(' ')
-            .map(word => word.toUpperCase()) // auto capitalize all letters
+            .map(word => word.toUpperCase())
             .join(' ')
         setUsername(value)
     }
 
     return (
         <div className="flex min-h-screen">
+            {flash && (
+                <div className="fixed top-4 right-4 z-50 w-full max-w-sm">
+                    <Flash
+                        type={flash.type}
+                        title={flash.type === "success" ? "Success" : "Error"}
+                        message={flash.message}
+                    />
+                </div>
+            )}
+
             <div className="flex-[0.4] flex flex-col justify-center p-12 relative" style={{ backgroundColor: 'var(--background)' }}>
                 <div className="w-full max-w-md p-8 rounded-xl relative">
                     <h1 className="text-3xl font-extrabold mb-2" style={{ color: 'var(--foreground)' }}>

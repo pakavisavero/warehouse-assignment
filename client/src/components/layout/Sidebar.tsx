@@ -1,4 +1,5 @@
 import { AiOutlineDashboard, AiFillDatabase, AiOutlineSetting, AiOutlineClose } from 'react-icons/ai'
+import { useNavigate } from 'react-router-dom'
 
 interface SidebarProps {
     activeMenu: string
@@ -8,15 +9,16 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeMenu, setActiveMenu, sidebarOpen, setSidebarOpen }: SidebarProps) {
+    const navigate = useNavigate()
+
     const menuItems = [
-        { name: 'Dashboard', icon: <AiOutlineDashboard /> },
-        { name: 'Expired Log', icon: <AiFillDatabase /> },
-        { name: 'Web Setting', icon: <AiOutlineSetting /> },
+        { name: 'Dashboard', icon: <AiOutlineDashboard />, path: '/dashboard' },
+        { name: 'Expired Log', icon: <AiFillDatabase />, path: '/expired-logs' },
+        { name: 'Web Setting', icon: <AiOutlineSetting />, path: '/web-setting' }
     ]
 
     return (
         <>
-            {/* Overlay for mobile */}
             {sidebarOpen && (
                 <div
                     className="fixed inset-0 z-40"
@@ -27,14 +29,13 @@ export default function Sidebar({ activeMenu, setActiveMenu, sidebarOpen, setSid
 
             <aside
                 className={`fixed md:static inset-y-0 left-0 z-50 w-64 md:w-56 lg:w-60 flex-shrink-0 flex flex-col border-r transition-transform duration-300
-    ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+                    ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
                 style={{
                     backgroundColor: 'var(--color-sidebar)',
                     color: 'var(--color-sidebar-foreground)',
                     borderColor: 'var(--color-sidebar-border)',
                 }}
             >
-                {/* Header */}
                 <div
                     className="p-6 font-semibold text-xl flex items-center justify-between"
                     style={{ borderBottom: '1px solid var(--color-sidebar-border)' }}
@@ -50,7 +51,6 @@ export default function Sidebar({ activeMenu, setActiveMenu, sidebarOpen, setSid
                     </button>
                 </div>
 
-                {/* Menu */}
                 <nav className="flex-1 px-2 py-4 space-y-1">
                     {menuItems.map(item => {
                         const isActive = activeMenu === item.name
@@ -59,6 +59,7 @@ export default function Sidebar({ activeMenu, setActiveMenu, sidebarOpen, setSid
                                 key={item.name}
                                 onClick={() => {
                                     setActiveMenu(item.name)
+                                    navigate(item.path)
                                     setSidebarOpen(false)
                                 }}
                                 className="flex items-center w-full px-4 py-2 rounded-lg transition-colors duration-200"
