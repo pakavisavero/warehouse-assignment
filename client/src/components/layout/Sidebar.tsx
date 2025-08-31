@@ -16,39 +16,66 @@ export default function Sidebar({ activeMenu, setActiveMenu, sidebarOpen, setSid
 
     return (
         <>
+            {/* Overlay for mobile */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-black bg-opacity-30 md:hidden"
+                    className="fixed inset-0 z-40"
+                    style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
+
             <aside
-                className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white shadow-md flex-shrink-0 flex flex-col transform transition-transform duration-300
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+                className={`fixed md:static inset-y-0 left-0 z-50 w-64 md:w-56 lg:w-60 flex-shrink-0 flex flex-col border-r transition-transform duration-300
+    ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+                style={{
+                    backgroundColor: 'var(--color-sidebar)',
+                    color: 'var(--color-sidebar-foreground)',
+                    borderColor: 'var(--color-sidebar-border)',
+                }}
             >
-                <div className="p-6 font-bold text-xl border-b border-gray-200 flex items-center justify-between">
-                    Package Queue
+                {/* Header */}
+                <div
+                    className="p-6 font-semibold text-xl flex items-center justify-between"
+                    style={{ borderBottom: '1px solid var(--color-sidebar-border)' }}
+                >
+                    <span className="tracking-wider" style={{ color: 'var(--color-sidebar-foreground)' }}>
+                        PACKAGE QUEUE
+                    </span>
                     <button className="md:hidden" onClick={() => setSidebarOpen(false)}>
-                        <AiOutlineClose className="text-2xl" />
+                        <AiOutlineClose
+                            className="text-xl transition-colors"
+                            style={{ color: 'var(--color-sidebar-foreground)' }}
+                        />
                     </button>
                 </div>
-                <nav className="flex-1 px-2 py-4 space-y-2">
-                    {menuItems.map(item => (
-                        <button
-                            key={item.name}
-                            onClick={() => {
-                                setActiveMenu(item.name)
-                                setSidebarOpen(false)
-                            }}
-                            className={`flex items-center w-full px-4 py-2 rounded-md transition-colors ${activeMenu === item.name
-                                ? 'bg-blue-100 text-blue-700 font-semibold'
-                                : 'text-gray-700 hover:bg-gray-100'
-                                }`}
-                        >
-                            <span className="mr-3 text-lg">{item.icon}</span>
-                            {item.name}
-                        </button>
-                    ))}
+
+                {/* Menu */}
+                <nav className="flex-1 px-2 py-4 space-y-1">
+                    {menuItems.map(item => {
+                        const isActive = activeMenu === item.name
+                        return (
+                            <button
+                                key={item.name}
+                                onClick={() => {
+                                    setActiveMenu(item.name)
+                                    setSidebarOpen(false)
+                                }}
+                                className="flex items-center w-full px-4 py-2 rounded-lg transition-colors duration-200"
+                                style={{
+                                    backgroundColor: isActive
+                                        ? 'var(--color-sidebar-primary)'
+                                        : 'transparent',
+                                    color: isActive
+                                        ? 'var(--color-sidebar-primary-foreground)'
+                                        : 'var(--color-sidebar-foreground)',
+                                }}
+                            >
+                                <span className="mr-3 text-lg">{item.icon}</span>
+                                <span className="tracking-wide">{item.name}</span>
+                            </button>
+                        )
+                    })}
                 </nav>
             </aside>
         </>
