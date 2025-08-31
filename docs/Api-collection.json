@@ -1,0 +1,320 @@
+{
+	"info": {
+		"_postman_id": "f89afcbf-5071-483c-ac37-0c8251fbac4a",
+		"name": "Warehouse Assignment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40644588",
+		"_collection_link": "https://worth-waste-team.postman.co/workspace/My-Workspace~b50d771b-2221-4f0f-859a-27b641a70670/collection/40644588-f89afcbf-5071-483c-ac37-0c8251fbac4a?action=share&source=collection_link&creator=40644588"
+	},
+	"item": [
+		{
+			"name": "Package",
+			"item": [
+				{
+					"name": "Get All",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-User-ID",
+								"value": "{{user}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host_url}}/packages",
+							"host": [
+								"{{host_url}}"
+							],
+							"path": [
+								"packages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get By Id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-User-ID",
+								"value": "{{user}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host_url}}/packages/:id",
+							"host": [
+								"{{host_url}}"
+							],
+							"path": [
+								"packages",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "8"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Package",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-User-ID",
+								"value": "{{user}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"order_ref\": \"ORD123456\",\n    \"driver\": \"Alex Miller\",\n    \"created_by\": \"service_account\",\n    \"modified_by\": \"service_account\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host_url}}/packages",
+							"host": [
+								"{{host_url}}"
+							],
+							"path": [
+								"packages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "X-User-ID",
+								"value": "{{user}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"<STATUS>\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host_url}}/packages/:id/status",
+							"host": [
+								"{{host_url}}"
+							],
+							"path": [
+								"packages",
+								":id",
+								"status"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "8"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Web Setting",
+			"item": [
+				{
+					"name": "Create or Update",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-User-ID",
+								"value": "{{user}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"period\": \"hours\",\n    \"time\": 12\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host_url}}/web-setting",
+							"host": [
+								"{{host_url}}"
+							],
+							"path": [
+								"web-setting"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Data",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-User-ID",
+								"value": "{{user}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host_url}}/web-setting",
+							"host": [
+								"{{host_url}}"
+							],
+							"path": [
+								"web-setting"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Package Log",
+			"item": [
+				{
+					"name": "Get All",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-User-ID",
+								"value": "{{user}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host_url}}/package-logs",
+							"host": [
+								"{{host_url}}"
+							],
+							"path": [
+								"package-logs"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Check Health",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host_check}}/health",
+					"host": [
+						"{{host_check}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"MANAGER1\",\n    \"password\": \"securepassword\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host_url}}/login",
+					"host": [
+						"{{host_url}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

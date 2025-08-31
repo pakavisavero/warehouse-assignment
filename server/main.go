@@ -5,6 +5,7 @@ import (
 	"log"
 	"server/config"
 	"server/controller"
+	"server/middleware"
 	"server/model"
 	"time"
 
@@ -17,7 +18,12 @@ func startPackageExpiryChecker(pkgModel *model.PackageModel) {
 	ticker := time.NewTicker(1 * time.Minute)
 	go func() {
 		for range ticker.C {
-			if err := pkgModel.ExpireOldPackages(10 * time.Minute); err != nil {
+			duration, err := pkgModel.GetExpiryDuration()
+			if err != nil {
+				log.Println("Failed to get expiry duration:", err)
+				continue
+			}
+			if err := pkgModel.ExpireOldPackages(duration); err != nil {
 				log.Println("Failed to expire packages:", err)
 			}
 		}
@@ -32,11 +38,19 @@ func main() {
 	defer rawDB.Close()
 	db := sqlx.NewDb(rawDB, "postgres")
 
-	// Initialize models and controllers
+	// Models & Controllers
 	packageModel := &model.PackageModel{DB: db}
 	packageController := &controller.PackageController{Model: packageModel}
 
-	// Start the package expiry checker
+	webSettingModel := &model.WebSettingModel{DB: db}
+	webSettingController := &controller.WebSettingController{Model: webSettingModel}
+
+	userModel := &model.UserModel{DB: db}
+	userController := &controller.UserController{Model: userModel}
+
+	packageLogModel := &model.PackageLogModel{DB: db}
+	packageLogController := &controller.PackageLogController{Model: packageLogModel}
+
 	startPackageExpiryChecker(packageModel)
 
 	mode := config.GetEnv("GO_ENV", "development")
@@ -46,32 +60,37 @@ func main() {
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowAllOrigins: true,
-		AllowMethods:    []string{"GET", "POST", "PUT", "OPTIONS", "PATCH"},
-		AllowHeaders:    []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders: []string{
-			"Content-Length",
-			"Access-Control-Allow-Origin",
-			"Access-Control-Allow-Headers",
-			"Content-Type",
-		},
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "OPTIONS", "PATCH"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-User-ID"},
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
 	}))
 
-	// Check Health
+	// Health Check
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status": "OK",
-		})
+		c.JSON(200, gin.H{"status": "OK"})
 	})
 
-	// API routes
+	// Auth routes
 	api := r.Group("/api/v1")
-	api.GET("/packages", packageController.GetAll)
-	api.PATCH("/packages/:id/status", packageController.UpdateStatus)
-	api.GET("/packages/:id", packageController.GetByID)
-	api.POST("/packages", packageController.Create)
+	api.POST("/login", userController.Login)
+	api.POST("/logout", userController.Logout)
 
+	api.Use(middleware.AuthMiddleware(userModel))
+	{
+		api.GET("/packages", packageController.GetAll)
+		api.PATCH("/packages/:id/status", packageController.UpdateStatus)
+		api.GET("/packages/:id", packageController.GetByID)
+		api.POST("/packages", packageController.Create)
+
+		api.GET("/web-setting", webSettingController.Get)
+		api.POST("/web-setting", webSettingController.CreateOrUpdate)
+
+		api.GET("/package-logs", packageLogController.GetAll)
+	}
+
+	// Start server
 	port := config.GetEnv("WEB_PORT", "8080")
 	log.Printf("Starting server on :%s", port)
 	if err := r.Run(fmt.Sprintf(":%s", port)); err != nil {

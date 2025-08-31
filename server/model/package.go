@@ -201,10 +201,17 @@ func (m *PackageModel) UpdateStatus(id uuid.UUID, newStatus PackageStatus) (*Pac
 
 func (m *PackageModel) ExpireOldPackages(duration time.Duration) error {
 	query := `
-		UPDATE packages
-		SET status = 'EXPIRED'
-		WHERE status = 'WAITING'
-		AND created_at <= NOW() - $1::interval
+		WITH expired AS (
+			UPDATE packages
+			SET status = 'EXPIRED'
+			WHERE status = 'WAITING'
+			AND created_at <= NOW() - $1::interval
+			RETURNING id, 'WAITING'::package_status AS old_status, 'EXPIRED'::package_status AS new_status
+		)
+			
+		INSERT INTO package_logs (package_id, old_status, new_status, changed_by, note)
+		SELECT id, old_status, new_status, 'SYSTEM', 'Auto-expired after timeout'
+		FROM expired;
 	`
 	_, err := m.DB.Exec(query, duration.String())
 	return err

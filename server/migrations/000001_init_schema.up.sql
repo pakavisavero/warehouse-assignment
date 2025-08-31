@@ -18,6 +18,11 @@ CREATE TABLE IF NOT EXISTS users (
     modified_by VARCHAR(150)
 );
 
+CREATE TABLE IF NOT EXISTS logic_active_user (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE IF NOT EXISTS packages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -40,6 +45,17 @@ CREATE TABLE IF NOT EXISTS package_logs (
     changed_by VARCHAR(150),
     note TEXT
 );
+
+CREATE TYPE period_enum AS ENUM ('minutes', 'hours', 'days');
+
+CREATE TABLE web_setting (
+    id SERIAL PRIMARY KEY,
+    period period_enum NOT NULL,
+    time INTEGER NOT NULL CHECK (time > 0),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 CREATE INDEX IF NOT EXISTS idx_package_logs_package_id ON package_logs(package_id);
 CREATE INDEX IF NOT EXISTS idx_packages_status ON packages(status);
