@@ -1,46 +1,103 @@
-import React from 'react'
-import PackageCard from '@/pages/dashboard/components/PackageCard'
-
-import { getStatusBadge } from '@/utils/statusUtils';
-import { formatTimestamp } from '@/utils/dateUtils';
+import { useState } from 'react'
+import { PencilIcon, PlusIcon } from 'lucide-react'
+import { getStatusBadge } from '@/utils/statusUtils'
+import { formatTimestamp } from '@/utils/dateUtils'
 
 import type { Package } from '@/types/Package'
+import PackageStatusModal from '@/pages/dashboard/components/modal/PackageStatusModal'
+import CreatePackageModal from '@/pages/dashboard/components/modal/CreatePackageModal'
+
+export const statusList = ['ALL', 'WAITING', 'PICKED', 'HANDED_OVER', 'EXPIRED'] as const
 
 interface PackageTableProps {
     packages: Package[]
+    handleUpdateStatus: (id: string, status: string) => void
+    handleCreatePackage: (data: { orderRef: string; driver?: string }) => void
 }
 
-const PackageRow = React.memo(({ pkg }: { pkg: Package }) => {
+const PackageRow = ({
+    pkg,
+    handleUpdateStatus,
+}: {
+    pkg: Package
+    handleUpdateStatus: (id: string, status: string) => void
+}) => {
     const badge = getStatusBadge(pkg.status)
-    return (
-        <tr className="transition-all hover:bg-gray-50 bg-white">
-            <td className="text-center text-xs sm:text-sm md:text-base px-4 py-2 whitespace-nowrap">{pkg.package_id}</td>
-            <td className="text-center text-xs sm:text-sm md:text-base px-4 py-2 whitespace-nowrap">{pkg.order_ref}</td>
-            <td className="text-center text-xs sm:text-sm md:text-base px-4 py-2 whitespace-nowrap">{pkg.driver}</td>
-            <td className="text-center text-xs sm:text-sm md:text-base px-4 py-2 whitespace-nowrap">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full font-semibold text-xs sm:text-sm ${badge.color}`}>
-                    {badge.icon}
-                    {pkg.status}
-                </span>
-            </td>
-            <td className="text-center text-xs sm:text-sm md:text-base px-4 py-2 whitespace-nowrap">{pkg.created_by}</td>
-            <td className="text-center text-xs sm:text-sm md:text-base px-4 py-2 whitespace-nowrap">{formatTimestamp(pkg.created_at)}</td>
-        </tr>
-    )
-})
+    const [isOpen, setIsOpen] = useState(false)
+    const isExpired = pkg.status.toUpperCase() === 'EXPIRED'
 
-export default function PackageTable({ packages }: PackageTableProps) {
+    return (
+        <>
+            <tr className="transition-all hover:bg-[var(--muted)] bg-[var(--card)]">
+                <td className="px-4 py-2">{pkg.package_id}</td>
+                <td className="px-4 py-2">{pkg.order_ref}</td>
+                <td className="px-4 py-2">{pkg.driver}</td>
+                <td className="px-4 py-2">
+                    <span
+                        className="inline-flex items-center px-3 py-1 rounded-full font-semibold text-xs sm:text-sm"
+                        style={{ backgroundColor: badge.color || 'var(--muted)' }}
+                    >
+                        {badge.icon} {pkg.status.replace('_', ' ')}
+                    </span>
+                </td>
+                <td className="px-4 py-2">{pkg.created_by}</td>
+                <td className="px-4 py-2">{formatTimestamp(pkg.created_at)}</td>
+                <td className="px-4 py-2">
+                    {isExpired ? (
+                        <span className="inline-block px-3 py-1 rounded-md text-sm font-medium bg-red-100 text-red-700">
+                            Already Expired
+                        </span>
+                    ) : pkg.status === 'HANDED_OVER' ? (
+                        <span className="inline-block px-3 py-1 rounded-md text-sm font-medium bg-green-100 text-green-700">
+                            Completed
+                        </span>
+                    ) : (
+                        <button
+                            onClick={() => setIsOpen(true)}
+                            className="flex items-center gap-1 px-3 py-1 rounded-md font-medium text-sm transition-all duration-200 border border-gray-500 text-gray-700 hover:bg-gray-100 hover:shadow-md cursor-pointer"
+                        >
+                            <PencilIcon className="w-4 h-4" /> Update
+                        </button>
+                    )}
+                </td>
+            </tr>
+
+            <PackageStatusModal
+                pkg={pkg}
+                isOpen={isOpen}
+                onClose={() => setIsOpen(false)}
+                onSave={handleUpdateStatus}
+            />
+        </>
+    )
+}
+
+export default function PackageTable({ packages, handleUpdateStatus, handleCreatePackage }: PackageTableProps) {
+    const [isCreateOpen, setIsCreateOpen] = useState(false)
+
+    const columns = ['Package ID', 'Order Ref', 'Driver', 'Status', 'Created By', 'Created At', 'Action']
+
     return (
         <div className="w-full mb-6">
-            {/* Desktop Table */}
+            <div className="flex justify-end mb-3">
+                <button
+                    onClick={() => setIsCreateOpen(true)}
+                    className="flex items-center gap-2 px-5 py-2 rounded-md font-semibold text-base transition-all duration-200 hover:bg-[var(--primary-dark)] hover:shadow-md cursor-pointer mb-2"
+                    style={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
+                >
+                    <PlusIcon className="w-5 h-5" /> Create
+                </button>
+            </div>
+
             <div className="hidden md:block overflow-x-auto rounded-lg shadow">
                 <table className="min-w-[700px] w-full table-auto border-collapse">
-                    <thead className="bg-gray-50">
-                        <tr className="sticky top-0 z-10 bg-gray-50">
-                            {['Package ID', 'Order Ref', 'Driver', 'Status', 'Created By', 'Created At'].map(head => (
+                    <thead className="bg-[var(--muted)]">
+                        <tr className="sticky top-0 z-10">
+                            {columns.map(head => (
                                 <th
                                     key={head}
-                                    className="text-center text-gray-600 font-semibold text-sm sm:text-base px-4 py-2 border-b border-gray-200 whitespace-nowrap"
+                                    className="text-left font-semibold text-sm sm:text-base px-4 py-2 border-b"
+                                    style={{ color: 'var(--muted-foreground)' }}
                                 >
                                     {head}
                                 </th>
@@ -49,10 +106,16 @@ export default function PackageTable({ packages }: PackageTableProps) {
                     </thead>
                     <tbody>
                         {packages.length > 0 ? (
-                            packages.map(pkg => <PackageRow key={pkg.id} pkg={pkg} />)
+                            packages.map(pkg => (
+                                <PackageRow key={pkg.id} pkg={pkg} handleUpdateStatus={handleUpdateStatus} />
+                            ))
                         ) : (
                             <tr>
-                                <td colSpan={6} className="text-center text-gray-500 py-8 text-sm sm:text-base whitespace-nowrap">
+                                <td
+                                    colSpan={7}
+                                    className="text-center py-8 text-sm sm:text-base"
+                                    style={{ color: 'var(--muted-foreground)' }}
+                                >
                                     No packages found for this status.
                                 </td>
                             </tr>
@@ -61,16 +124,11 @@ export default function PackageTable({ packages }: PackageTableProps) {
                 </table>
             </div>
 
-            {/* Mobile Cards */}
-            <div className="md:hidden">
-                {packages.length > 0 ? (
-                    packages.map(pkg => <PackageCard key={pkg.id} pkg={pkg} />)
-                ) : (
-                    <div className="text-center text-gray-500 py-8 text-sm sm:text-base">
-                        No packages found for this status.
-                    </div>
-                )}
-            </div>
+            <CreatePackageModal
+                isOpen={isCreateOpen}
+                onClose={() => setIsCreateOpen(false)}
+                onCreate={handleCreatePackage}
+            />
         </div>
     )
 }
