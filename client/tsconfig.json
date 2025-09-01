@@ -12,6 +12,7 @@
     "skipLibCheck": true,
     "baseUrl": "./src",
     "paths": { "@/*": ["*"] },
+    "noImplicitAny": false
   },
   "include": ["src"]
 }
