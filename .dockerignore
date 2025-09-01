@@ -1,1 +1,8 @@
-server/vendor/
+# Client
+client/node_modules
+client/.pnpm-store
+client/.turbo
+client/dist
+
+# Server
+server/vendor

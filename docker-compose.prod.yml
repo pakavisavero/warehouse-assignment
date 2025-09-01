@@ -1,0 +1,43 @@
+services:
+  db:
+    container_name: prod_postgres
+    image: postgres:13
+    restart: always
+    env_file:
+      - dbconfig.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pakavisavero"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  server:
+    container_name: prod_server
+    build:
+      context: .
+      dockerfile: server/Dockerfile.prod
+    restart: always
+    env_file:
+      - dbconfig.env
+      - webconfig.env
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+
+  client:
+    container_name: prod_client
+    build:
+      context: .
+      dockerfile: client/Dockerfile.prod
+    restart: always
+    env_file:
+      - webconfig.env
+    ports:
+      - "4173:4173"
+
+volumes:
+  db_data:
+    driver: local
