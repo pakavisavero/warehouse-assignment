@@ -5,6 +5,7 @@ import { fetchWebSetting, updateWebSetting, type WebSetting } from "@/api/webSet
 import { Flash } from "@/components/Flash"
 import type { FlashMessage } from "@/types/FlashMessage"
 import { PERIODS } from "@/types/Period"
+import { AlertTriangle } from "lucide-react";
 
 type PeriodType = typeof PERIODS[number]
 
@@ -74,11 +75,9 @@ export default function WebSettingPage() {
                                 Loading settings...
                             </p>
                         ) : !webSetting ? (
-                            <div
-                                className="mb-4 p-4 rounded-md bg-yellow-100 text-yellow-800 font-medium"
-                                style={{ border: '1px solid var(--muted)' }}
-                            >
-                                Not setted
+                            <div className="mb-4 p-4 rounded-md bg-yellow-50 border border-yellow-400 text-yellow-900 font-medium flex items-center gap-2">
+                                <AlertTriangle className="w-5 h-5" />
+                                <span>Not setted</span>
                             </div>
                         ) : null}
 

@@ -24,8 +24,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# Shadcn
-src/components/ui
-
 # Environment
 .env
