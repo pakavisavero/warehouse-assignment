@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
+import { PlusIcon } from 'lucide-react'
 
 import StatusFilter from '@/pages/dashboard/components/StatusFilter'
 import PackageTable from '@/pages/dashboard/components/PackageTable'
+import PackageCard from '@/pages/dashboard/components/PackageCard'
 import AggregatesCard from '@/pages/dashboard/components/AggregatesCard'
 import PaginationControl from '@/pages/dashboard/components/PaginationControl'
+import CreatePackageModal from '@/pages/dashboard/components/modal/CreatePackageModal'
 
 import { usePackages } from '@/hooks/usePackages'
 import { createPackage, updatePackageStatus } from '@/api/packages'
@@ -20,6 +23,7 @@ export default function Dashboard() {
   const [activeMenu, setActiveMenu] = useState<string>('Dashboard')
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false)
   const [flash, setFlash] = useState<FlashMessage | null>(null)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
 
   const [searchParams, setSearchParams] = useSearchParams()
   const statusParam = searchParams.get('status') || 'ALL'
@@ -28,10 +32,8 @@ export default function Dashboard() {
 
   const [selectedStatus, setSelectedStatus] = useState<string>(statusParam)
 
-  // Sync query params only if we are on /dashboard
   useEffect(() => {
     if (location.pathname !== '/dashboard') return
-
     setCurrentPage(Number(pageParam))
     setItemsPerPage(Number(limitParam))
     setSelectedStatus(statusParam)
@@ -39,7 +41,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (location.pathname !== '/dashboard') return
-
     const params: Record<string, string> = {
       page: currentPage.toString(),
       limit: itemsPerPage.toString(),
@@ -95,46 +96,66 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div
-        className="min-h-screen flex"
-        style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
-      >
+      <div className="min-h-screen flex bg-[var(--background)] text-[var(--foreground)]">
         <Sidebar
           activeMenu={activeMenu}
           setActiveMenu={setActiveMenu}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
         />
+
         <div className="flex-1 flex flex-col">
           <Topbar />
-          <main className="flex-1 p-4 sm:p-6 md:p-8 flex flex-col transition-all">
-            <h4
-              className="hidden md:block text-3xl font-extrabold mb-5"
-              style={{ color: 'var(--foreground)' }}
-            >
-              Package Dashboard
-            </h4>
+
+          <main className="flex-1 flex flex-col p-4 sm:p-6 md:p-8 transition-all">
+            <div className="flex justify-between items-center mb-5">
+              <h4 className="hidden md:block text-3xl font-extrabold">
+                Package Dashboard
+              </h4>
+
+            </div>
+
             <div className="w-full max-w-8xl">
               {aggregates && <AggregatesCard aggregates={aggregates} />}
               <hr className="my-6 border-t-1" style={{ borderColor: 'var(--border)' }} />
-              <StatusFilter selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus} />
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
+                <StatusFilter selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus} />
+
+                <button
+                  onClick={() => setIsCreateOpen(true)}
+                  className="flex items-center gap-2 px-5 py-2 rounded-md font-semibold text-base transition-all duration-200 hover:bg-[var(--primary-dark)] hover:shadow-md cursor-pointer"
+                  style={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
+                >
+                  Create <PlusIcon className="w-5 h-5" />
+                </button>
+              </div>
 
               {loading ? (
                 <div className="flex justify-center items-center h-64">
-                  <p
-                    className="text-lg font-medium animate-pulse"
-                    style={{ color: 'var(--muted-foreground)' }}
-                  >
+                  <p className="text-lg font-medium animate-pulse text-[var(--muted-foreground)]">
                     Loading packages...
                   </p>
                 </div>
               ) : (
                 <>
-                  <PackageTable
-                    packages={packages}
-                    handleUpdateStatus={handleUpdateStatus}
-                    handleCreatePackage={handleCreatePackage}
-                  />
+                  <div className="hidden md:block">
+                    <PackageTable
+                      packages={packages}
+                      handleUpdateStatus={handleUpdateStatus}
+                    />
+                  </div>
+
+                  <div className="block md:hidden">
+                    {packages.length > 0 ? (
+                      packages.map(pkg => <PackageCard key={pkg.id} pkg={pkg} />)
+                    ) : (
+                      <p className="text-center py-8 text-[var(--muted-foreground)]">
+                        No packages found.
+                      </p>
+                    )}
+                  </div>
+
                   <PaginationControl
                     totalPages={totalPages}
                     currentPage={currentPage}
@@ -143,26 +164,24 @@ export default function Dashboard() {
                 </>
               )}
             </div>
-            <div className="flex items-center space-x-3 mb-4">
-              <label
-                htmlFor="itemsPerPage"
-                className="text-sm font-medium"
-                style={{ color: 'var(--foreground)' }}
-              >
+
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 mb-4">
+              <label htmlFor="itemsPerPage" className="text-sm font-medium">
                 Show:
               </label>
               <select
                 id="itemsPerPage"
+                value={itemsPerPage}
+                onChange={e => {
+                  setItemsPerPage(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
                 className="rounded-md px-4 py-2 shadow-sm focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--card)',
                   color: 'var(--card-foreground)',
                   borderColor: 'var(--border)',
-                }}
-                value={itemsPerPage}
-                onChange={e => {
-                  setItemsPerPage(Number(e.target.value))
-                  setCurrentPage(1)
                 }}
               >
                 {[5, 20, 50, 100].map(n => (
@@ -175,6 +194,12 @@ export default function Dashboard() {
           </main>
         </div>
       </div>
+
+      <CreatePackageModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onCreate={handleCreatePackage}
+      />
     </>
   )
 }

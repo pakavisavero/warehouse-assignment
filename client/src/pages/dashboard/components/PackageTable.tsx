@@ -1,18 +1,14 @@
 import { useState } from 'react'
-import { PencilIcon, PlusIcon } from 'lucide-react'
+import { PencilIcon } from 'lucide-react'
 import { getStatusBadge } from '@/utils/statusUtils'
 import { formatTimestamp } from '@/utils/dateUtils'
 
 import type { Package } from '@/types/Package'
 import PackageStatusModal from '@/pages/dashboard/components/modal/PackageStatusModal'
-import CreatePackageModal from '@/pages/dashboard/components/modal/CreatePackageModal'
-
-export const statusList = ['ALL', 'WAITING', 'PICKED', 'HANDED_OVER', 'EXPIRED'] as const
 
 interface PackageTableProps {
     packages: Package[]
     handleUpdateStatus: (id: string, status: string) => void
-    handleCreatePackage: (data: { orderRef: string; driver?: string }) => void
 }
 
 const PackageRow = ({
@@ -72,23 +68,11 @@ const PackageRow = ({
     )
 }
 
-export default function PackageTable({ packages, handleUpdateStatus, handleCreatePackage }: PackageTableProps) {
-    const [isCreateOpen, setIsCreateOpen] = useState(false)
-
+export default function PackageTable({ packages, handleUpdateStatus }: PackageTableProps) {
     const columns = ['Package ID', 'Order Ref', 'Driver', 'Status', 'Created By', 'Created At', 'Action']
 
     return (
         <div className="w-full mb-6">
-            <div className="flex justify-end mb-3">
-                <button
-                    onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2 rounded-md font-semibold text-base transition-all duration-200 hover:bg-[var(--primary-dark)] hover:shadow-md cursor-pointer mb-2"
-                    style={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
-                >
-                    <PlusIcon className="w-5 h-5" /> Create
-                </button>
-            </div>
-
             <div className="hidden md:block overflow-x-auto rounded-lg shadow">
                 <table className="min-w-[700px] w-full table-auto border-collapse">
                     <thead className="bg-[var(--muted)]">
@@ -123,12 +107,6 @@ export default function PackageTable({ packages, handleUpdateStatus, handleCreat
                     </tbody>
                 </table>
             </div>
-
-            <CreatePackageModal
-                isOpen={isCreateOpen}
-                onClose={() => setIsCreateOpen(false)}
-                onCreate={handleCreatePackage}
-            />
         </div>
     )
 }
