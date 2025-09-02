@@ -1,6 +1,4 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import '@testing-library/jest-dom' 
 import PackageTable from '@/pages/dashboard/components/PackageTable'
 import type { Package } from '@/types/Package'
 
@@ -22,7 +20,6 @@ describe('PackageTable Component', () => {
             <PackageTable
                 packages={packages}
                 handleUpdateStatus={jest.fn()}
-                handleCreatePackage={jest.fn()}
             />
         )
 
@@ -31,20 +28,14 @@ describe('PackageTable Component', () => {
         expect(screen.getByText('WAITING')).toBeInTheDocument()
     })
 
-    it('opens CreatePackageModal when create button clicked', async () => {
-        const user = userEvent.setup()
-
+    it('renders "No packages found" when package list is empty', () => {
         render(
             <PackageTable
                 packages={[]}
                 handleUpdateStatus={jest.fn()}
-                handleCreatePackage={jest.fn()}
             />
         )
 
-        const createButton = screen.getByRole('button', { name: /create/i })
-        await user.click(createButton)
-
-        expect(screen.getByText('Create Package')).toBeInTheDocument()
+        expect(screen.getByText(/no packages found/i)).toBeInTheDocument()
     })
 })
